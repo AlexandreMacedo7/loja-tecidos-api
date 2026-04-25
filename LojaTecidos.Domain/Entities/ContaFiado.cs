@@ -1,0 +1,18 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace LojaTecidos.Domain.Entities
+{
+    public class ContaFiado
+    {
+        public DateTime DataVencimento { get; private set; }
+        public decimal SaldoDevedor { get; private set; }
+
+        public ContaFiado(DateTime dateTime, decimal saldoDevedor) { 
+            DataVencimento = dateTime;
+            SaldoDevedor = saldoDevedor;
+        
+        }
+    }
+}
