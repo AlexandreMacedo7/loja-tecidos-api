@@ -29,7 +29,7 @@ namespace LojaTecidos.Domain.Tests.Entities
         {
             //Arrange
             var cliente = new Cliente(new PerfilCredito(CategoriaPerfil.BRONZE));
-            var contaFiado = new ContaFiado(new DateTime(2026,05,10), 130.00m);
+            var contaFiado = new ContaFiado(new DateTime(2026, 05, 10), 130.00m);
 
             //Act
             cliente.AdicionarConta(contaFiado);
@@ -37,7 +37,8 @@ namespace LojaTecidos.Domain.Tests.Entities
             //Assert
             Assert.Single(cliente.Contas);
         }
-        [Theory]//adicionar theore e inline data
+
+        [Theory]
         [InlineData(CategoriaPerfil.BRONZE, 150.01)]
         [InlineData(CategoriaPerfil.PRATA, 350.01)]
         [InlineData(CategoriaPerfil.OURO, 500.01)]
@@ -47,12 +48,25 @@ namespace LojaTecidos.Domain.Tests.Entities
             var perfilCredito = new PerfilCredito(categoriaPerfil);
             var cliente = new Cliente(perfilCredito);
             var contaFiado = new ContaFiado(new DateTime(2026, 05, 10), valorConta);
-            
+
             //Act & Asset
-            Assert.Throws<InvalidOperationException>( ()=> cliente.AdicionarConta(contaFiado));
-            
+            Assert.Throws<InvalidOperationException>(() => cliente.AdicionarConta(contaFiado));
+
         }
 
-        //Cenario de data muito longa para pagamento
+        [Fact]
+        public void AdicionarContaFiado_DataMaiorQueTrintaDias_DeveLancarExcecao()
+        {
+            //Arrange
+            var dataPagamento = new DateTime(2026, 05, 30);
+            var valorConta = 150.00m;
+            var cliente = new Cliente(new PerfilCredito(CategoriaPerfil.BRONZE));
+            
+            var conta = new ContaFiado(dataPagamento, valorConta);
+
+            //Act & Assert
+            Assert.Throws<InvalidOperationException>(()=> cliente.AdicionarConta(conta));
+        }
+
     }
 }

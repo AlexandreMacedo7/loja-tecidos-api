@@ -1,4 +1,5 @@
 using LojaTecidos.Domain.Entities;
+using LojaTecidos.Domain.Entities.Enum;
 
 namespace LojaTecidos.Domain.Tests.Entities;
 
@@ -37,7 +38,7 @@ public class ContaFiadoTests
         //Act
         conta.RegistrarPagamento(100.00m);
         //Assert
-        Assert.Equal(0m, conta.SaldoDevedor); 
+        Assert.Equal(0m, conta.SaldoDevedor);
     }
 
     [Theory]
@@ -46,10 +47,21 @@ public class ContaFiadoTests
     public void RegistrarPagamento_ValorZeroOuNegativo_DeveLancarExcecao(decimal valorNegativoOuZero)
     {
         //Arrange
-        var conta = new ContaFiado(new DateTime(2026,02,10), 100.00m);
-        
+        var conta = new ContaFiado(new DateTime(2026, 02, 10), 100.00m);
+
         //Act & Assert
         Assert.Throws<ArgumentException>(() => conta.RegistrarPagamento(valorNegativoOuZero));
+
+    }
+
+    [Fact]
+    public void RegistrarPagamento_DataInferiorADataAtual_DeveLancarExcecao()
+    {
+        //Arrange
+        var conta = new ContaFiado(new DateTime(2026, 02, 10), 100.00m);
+
+        //Act & Assert
+        Assert.Throws<ArgumentException>(() => conta.RegistrarPagamento(50.00m));
 
     }
 }
