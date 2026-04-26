@@ -4,18 +4,19 @@ namespace LojaTecidos.Domain.Entities
 {
     public class PerfilCredito
     {
-        public CategoriaPerfil Categoria { get; set; }
-        private decimal limiteBronze = 150.00m;
+        public CategoriaPerfil Categoria { get; private set; }
+        public decimal Limite { get; private set;}
 
         public PerfilCredito(CategoriaPerfil categoria) {
-        
-            Categoria = categoria;
-        }
+              Categoria = categoria;
 
-        public decimal RetornoSaldoPerfil()
-        {
-            return limiteBronze;
-
+              Limite = categoria switch
+              {
+                  CategoriaPerfil.OURO => 500.00m,
+                  CategoriaPerfil.PRATA => 300.00m,
+                  CategoriaPerfil.BRONZE => 150.00m,
+                  _ => 0
+              };
         }
     }
 }

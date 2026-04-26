@@ -37,17 +37,22 @@ namespace LojaTecidos.Domain.Tests.Entities
             //Assert
             Assert.Single(cliente.Contas);
         }
-        [Fact]
-        public void AdicionarContaFiado_ValorMaiorQueLimiteDoPerfil_DeveLancarExcecao()
+        [Theory]//adicionar theore e inline data
+        [InlineData(CategoriaPerfil.BRONZE, 150.01)]
+        [InlineData(CategoriaPerfil.PRATA, 350.01)]
+        [InlineData(CategoriaPerfil.OURO, 500.01)]
+        public void AdicionarContaFiado_ValorMaiorQueLimiteDoPerfil_DeveLancarExcecao(CategoriaPerfil categoriaPerfil, decimal valorConta)
         {
             //Arrange
-            var perfilCredito = new PerfilCredito(CategoriaPerfil.BRONZE);
+            var perfilCredito = new PerfilCredito(categoriaPerfil);
             var cliente = new Cliente(perfilCredito);
-            var contaFiado = new ContaFiado(new DateTime(2026, 05, 10), 160.00m);
+            var contaFiado = new ContaFiado(new DateTime(2026, 05, 10), valorConta);
             
             //Act & Asset
             Assert.Throws<InvalidOperationException>( ()=> cliente.AdicionarConta(contaFiado));
             
         }
+
+        //Cenario de data muito longa para pagamento
     }
 }

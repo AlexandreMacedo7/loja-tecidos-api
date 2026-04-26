@@ -22,7 +22,7 @@ namespace LojaTecidos.Domain.Entities
             {
                 throw new InvalidOperationException("Cliente já possuí dívida ativa.");
             }
-            else if (conta.SaldoDevedor > PerfilCredito.RetornoSaldoPerfil())
+            else if (conta.SaldoDevedor > PerfilCredito.Limite)
             {
                 throw new InvalidOperationException("Crédito insuficiente para cliente Bronze");
             }
