@@ -9,6 +9,7 @@ public class Produto
 
     private readonly List<MovimentacaoEstoque> _movimentacoes = [];
 
+    public Guid Id { get; }
     public string CodigoInterno { get; }
     public string? CodigoFornecedor { get; }
     public string Nome { get; }
@@ -35,22 +36,11 @@ public class Produto
         DateTime dataCadastro,
         string? codigoFornecedor = null)
     {
-        if (string.IsNullOrWhiteSpace(codigoInterno))
-            throw new ArgumentException("Código interno é obrigatório.", nameof(codigoInterno));
+        ValidarDadosCadastro(codigoInterno, nome, precoUnitario, estoqueInicial, categoria, unidadeMedida);
 
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new ArgumentException("Nome do produto é obrigatório.", nameof(nome));
-
-        if (precoUnitario <= 0)
-            throw new ArgumentException("Preço unitário deve ser maior que zero.", nameof(precoUnitario));
-
-        if (estoqueInicial < 0)
-            throw new ArgumentException("Estoque inicial não pode ser negativo.", nameof(estoqueInicial));
-
-        RegraUnidadeMedidaProduto.Validar(categoria, unidadeMedida);
-
+        Id = Guid.NewGuid();
         CodigoInterno = codigoInterno.Trim();
-        CodigoFornecedor = string.IsNullOrWhiteSpace(codigoFornecedor) ? null : codigoFornecedor.Trim();
+        CodigoFornecedor = NormalizarCodigoFornecedor(codigoFornecedor);
         Nome = nome.Trim();
         Fornecedor = fornecedor;
         Categoria = categoria;
@@ -61,10 +51,83 @@ public class Produto
         QuantidadeReferenciaAlerta = QuantidadeAtual;
 
         if (estoqueInicial > 0)
+        {
             DataUltimaEntrada = dataCadastro;
-
-        if (estoqueInicial > 0)
             RegistrarMovimentacao(TipoMovimentacaoEstoque.Entrada, estoqueInicial, dataCadastro);
+        }
+    }
+
+    /// <summary>
+    /// Reidrata o produto a partir da persistência. Uso exclusivo da camada Infrastructure.
+    /// </summary>
+    internal static Produto Reconstituir(
+        Guid id,
+        string codigoInterno,
+        string nome,
+        Fornecedor fornecedor,
+        CategoriaProduto categoria,
+        UnidadeMedida unidadeMedida,
+        decimal precoUnitario,
+        decimal quantidadeAtual,
+        decimal quantidadeReferenciaAlerta,
+        DateTime dataCadastro,
+        DateTime? dataUltimaVenda,
+        DateTime? dataUltimaEntrada,
+        bool descontinuado,
+        string? codigoFornecedor,
+        IEnumerable<MovimentacaoEstoque> movimentacoes) =>
+        new(
+            id,
+            codigoInterno,
+            nome,
+            fornecedor,
+            categoria,
+            unidadeMedida,
+            precoUnitario,
+            quantidadeAtual,
+            quantidadeReferenciaAlerta,
+            dataCadastro,
+            dataUltimaVenda,
+            dataUltimaEntrada,
+            descontinuado,
+            codigoFornecedor,
+            movimentacoes);
+
+    private Produto(
+        Guid id,
+        string codigoInterno,
+        string nome,
+        Fornecedor fornecedor,
+        CategoriaProduto categoria,
+        UnidadeMedida unidadeMedida,
+        decimal precoUnitario,
+        decimal quantidadeAtual,
+        decimal quantidadeReferenciaAlerta,
+        DateTime dataCadastro,
+        DateTime? dataUltimaVenda,
+        DateTime? dataUltimaEntrada,
+        bool descontinuado,
+        string? codigoFornecedor,
+        IEnumerable<MovimentacaoEstoque> movimentacoes)
+    {
+        if (quantidadeAtual < 0 || quantidadeReferenciaAlerta < 0)
+            throw new ArgumentException("Quantidades persistidas não podem ser negativas.");
+
+        Id = id;
+        CodigoInterno = codigoInterno.Trim();
+        CodigoFornecedor = NormalizarCodigoFornecedor(codigoFornecedor);
+        Nome = nome.Trim();
+        Fornecedor = fornecedor;
+        Categoria = categoria;
+        UnidadeMedida = unidadeMedida;
+        PrecoUnitario = decimal.Round(precoUnitario, 2);
+        DataCadastro = dataCadastro;
+        QuantidadeAtual = decimal.Round(quantidadeAtual, 2);
+        QuantidadeReferenciaAlerta = decimal.Round(quantidadeReferenciaAlerta, 2);
+        DataUltimaVenda = dataUltimaVenda;
+        DataUltimaEntrada = dataUltimaEntrada;
+        Descontinuado = descontinuado;
+        _movimentacoes.AddRange(movimentacoes);
     }
 
     public void AlterarPreco(decimal novoPreco)
@@ -145,6 +208,32 @@ public class Produto
 
         return DataCadastro;
     }
+
+    private static void ValidarDadosCadastro(
+        string codigoInterno,
+        string nome,
+        decimal precoUnitario,
+        decimal estoqueInicial,
+        CategoriaProduto categoria,
+        UnidadeMedida unidadeMedida)
+    {
+        if (string.IsNullOrWhiteSpace(codigoInterno))
+            throw new ArgumentException("Código interno é obrigatório.", nameof(codigoInterno));
+
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new ArgumentException("Nome do produto é obrigatório.", nameof(nome));
+
+        if (precoUnitario <= 0)
+            throw new ArgumentException("Preço unitário deve ser maior que zero.", nameof(precoUnitario));
+
+        if (estoqueInicial < 0)
+            throw new ArgumentException("Estoque inicial não pode ser negativo.", nameof(estoqueInicial));
+
+        RegraUnidadeMedidaProduto.Validar(categoria, unidadeMedida);
+    }
+
+    private static string? NormalizarCodigoFornecedor(string? codigoFornecedor) =>
+        string.IsNullOrWhiteSpace(codigoFornecedor) ? null : codigoFornecedor.Trim();
 
     private void ValidarQuantidade(decimal quantidade)
     {

@@ -4,6 +4,7 @@ namespace LojaTecidos.Domain.Entities;
 
 public class ContaFiado
 {
+    public Guid Id { get; }
     public DateTime DataEmissao { get; private set; }
     public DateTime DataVencimento { get; private set; }
     public decimal SaldoDevedor { get; private set; }
@@ -18,10 +19,38 @@ public class ContaFiado
 
         ValidarVencimentoEmRelacaoAEmissao(dataEmissao, dataVencimento);
 
+        Id = Guid.NewGuid();
         DataEmissao = dataEmissao;
         DataVencimento = dataVencimento;
         SaldoDevedor = saldoDevedor;
         Status = StatusContaFiado.Ativa;
+    }
+
+    /// <summary>
+    /// Reidrata a conta a partir da persistência. Uso exclusivo da camada Infrastructure.
+    /// </summary>
+    internal static ContaFiado Reconstituir(
+        Guid id,
+        DateTime dataEmissao,
+        DateTime dataVencimento,
+        decimal saldoDevedor,
+        StatusContaFiado status) =>
+        new(id, dataEmissao, dataVencimento, saldoDevedor, status);
+
+    private ContaFiado(
+        Guid id,
+        DateTime dataEmissao,
+        DateTime dataVencimento,
+        decimal saldoDevedor,
+        StatusContaFiado status)
+    {
+        ValidarEstadoPersistido(saldoDevedor, status);
+
+        Id = id;
+        DataEmissao = dataEmissao;
+        DataVencimento = dataVencimento;
+        SaldoDevedor = saldoDevedor;
+        Status = status;
     }
 
     public void AdicionarCompra(decimal valor)
@@ -59,6 +88,15 @@ public class ContaFiado
 
         ValidarVencimentoEmRelacaoAPagamento(dataPagamento, novaDataVencimento.Value);
         DataVencimento = novaDataVencimento.Value;
+    }
+
+    private static void ValidarEstadoPersistido(decimal saldoDevedor, StatusContaFiado status)
+    {
+        if (status == StatusContaFiado.Ativa && saldoDevedor <= 0)
+            throw new ArgumentException("Conta ativa persistida deve possuir saldo devedor maior que zero.");
+
+        if (status == StatusContaFiado.Quitada && saldoDevedor != 0)
+            throw new ArgumentException("Conta quitada persistida deve possuir saldo devedor zerado.");
     }
 
     private static void ValidarVencimentoEmRelacaoAEmissao(DateTime dataEmissao, DateTime dataVencimento)

@@ -7,6 +7,7 @@ public class Cliente
 {
     private readonly List<ContaFiado> _contasQuitadas = [];
 
+    public Guid Id { get; }
     public string Nome { get; private set; }
     public string Telefone { get; private set; }
     public Endereco Endereco { get; private set; }
@@ -25,21 +26,67 @@ public class Cliente
         string? cnpj = null,
         PerfilCredito? perfilCredito = null)
     {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new ArgumentException("Nome é obrigatório.", nameof(nome));
+        ValidarDadosCadastro(nome, telefone, cpf, cnpj);
 
-        if (string.IsNullOrWhiteSpace(telefone))
-            throw new ArgumentException("Telefone é obrigatório.", nameof(telefone));
-
-        if (!string.IsNullOrWhiteSpace(cpf) && !string.IsNullOrWhiteSpace(cnpj))
-            throw new ArgumentException("Informe apenas CPF ou CNPJ.");
-
+        Id = Guid.NewGuid();
         Nome = nome.Trim();
         Telefone = telefone.Trim();
         Endereco = endereco;
-        Cpf = string.IsNullOrWhiteSpace(cpf) ? null : cpf.Trim();
-        Cnpj = string.IsNullOrWhiteSpace(cnpj) ? null : cnpj.Trim();
+        Cpf = NormalizarDocumento(cpf);
+        Cnpj = NormalizarDocumento(cnpj);
         PerfilCredito = perfilCredito ?? new PerfilCredito(CategoriaPerfil.BRONZE);
+    }
+
+    /// <summary>
+    /// Reidrata o cliente a partir da persistência. Uso exclusivo da camada Infrastructure.
+    /// </summary>
+    internal static Cliente Reconstituir(
+        Guid id,
+        string nome,
+        string telefone,
+        Endereco endereco,
+        string? cpf,
+        string? cnpj,
+        CategoriaPerfil categoriaPerfil,
+        bool bloqueado,
+        ContaFiado? contaFiadoAtiva,
+        IEnumerable<ContaFiado> contasQuitadas) =>
+        new(
+            id,
+            nome,
+            telefone,
+            endereco,
+            cpf,
+            cnpj,
+            categoriaPerfil,
+            bloqueado,
+            contaFiadoAtiva,
+            contasQuitadas);
+
+    private Cliente(
+        Guid id,
+        string nome,
+        string telefone,
+        Endereco endereco,
+        string? cpf,
+        string? cnpj,
+        CategoriaPerfil categoriaPerfil,
+        bool bloqueado,
+        ContaFiado? contaFiadoAtiva,
+        IEnumerable<ContaFiado> contasQuitadas)
+    {
+        ValidarDadosCadastro(nome, telefone, cpf, cnpj);
+
+        Id = id;
+        Nome = nome.Trim();
+        Telefone = telefone.Trim();
+        Endereco = endereco;
+        Cpf = NormalizarDocumento(cpf);
+        Cnpj = NormalizarDocumento(cnpj);
+        PerfilCredito = new PerfilCredito(categoriaPerfil);
+        Bloqueado = bloqueado;
+        ContaFiadoAtiva = contaFiadoAtiva;
+        _contasQuitadas.AddRange(contasQuitadas);
     }
 
     public void AlterarPerfil(CategoriaPerfil categoria)
@@ -87,4 +134,19 @@ public class Cliente
             ContaFiadoAtiva = null;
         }
     }
+
+    private static void ValidarDadosCadastro(string nome, string telefone, string? cpf, string? cnpj)
+    {
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new ArgumentException("Nome é obrigatório.", nameof(nome));
+
+        if (string.IsNullOrWhiteSpace(telefone))
+            throw new ArgumentException("Telefone é obrigatório.", nameof(telefone));
+
+        if (!string.IsNullOrWhiteSpace(cpf) && !string.IsNullOrWhiteSpace(cnpj))
+            throw new ArgumentException("Informe apenas CPF ou CNPJ.");
+    }
+
+    private static string? NormalizarDocumento(string? documento) =>
+        string.IsNullOrWhiteSpace(documento) ? null : documento.Trim();
 }

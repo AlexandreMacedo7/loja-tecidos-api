@@ -4,4 +4,5 @@
   <Project Path="LojaTecidos.Domain.Tests/LojaTecidos.Domain.Tests.csproj" />
   <Project Path="LojaTecidos.Domain/LojaTecidos.Domain.csproj" />
   <Project Path="LojaTecidos.Infrastructure/LojaTecidos.Infrastructure.csproj" />
+  <Project Path="LojaTecidos.Infrastructure.Tests/LojaTecidos.Infrastructure.Tests.csproj" />
 </Solution>

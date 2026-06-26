@@ -9,6 +9,7 @@ public class Venda
 
     private readonly List<ItemVenda> _itens;
 
+    public Guid Id { get; }
     public int NumeroSequencial { get; }
     public string CodigoVenda { get; }
     public DateTime DataVenda { get; }
@@ -33,6 +34,53 @@ public class Venda
         decimal descontoPercentual,
         IEnumerable<ItemVenda> itens,
         string? usuarioId)
+        : this(
+            Guid.NewGuid(),
+            numeroSequencial,
+            codigoVenda,
+            dataVenda,
+            tipo,
+            StatusVenda.Confirmada,
+            descontoPercentual,
+            itens,
+            usuarioId)
+    {
+    }
+
+    /// <summary>
+    /// Reidrata a venda a partir da persistência. Uso exclusivo da camada Infrastructure.
+    /// </summary>
+    internal static Venda Reconstituir(
+        Guid id,
+        int numeroSequencial,
+        string codigoVenda,
+        DateTime dataVenda,
+        TipoVenda tipo,
+        StatusVenda status,
+        decimal descontoPercentual,
+        IEnumerable<ItemVenda> itens,
+        string? usuarioId) =>
+        new(
+            id,
+            numeroSequencial,
+            codigoVenda,
+            dataVenda,
+            tipo,
+            status,
+            descontoPercentual,
+            itens,
+            usuarioId);
+
+    private Venda(
+        Guid id,
+        int numeroSequencial,
+        string codigoVenda,
+        DateTime dataVenda,
+        TipoVenda tipo,
+        StatusVenda status,
+        decimal descontoPercentual,
+        IEnumerable<ItemVenda> itens,
+        string? usuarioId)
     {
         if (numeroSequencial <= 0)
             throw new ArgumentException("Número sequencial deve ser maior que zero.", nameof(numeroSequencial));
@@ -48,13 +96,14 @@ public class Venda
         if (_itens.Count == 0)
             throw new ArgumentException("A venda deve conter ao menos um item.");
 
+        Id = id;
         NumeroSequencial = numeroSequencial;
         CodigoVenda = codigoVenda.Trim();
         DataVenda = dataVenda;
         Tipo = tipo;
+        Status = status;
         DescontoPercentual = decimal.Round(descontoPercentual, 2);
         UsuarioId = string.IsNullOrWhiteSpace(usuarioId) ? null : usuarioId.Trim();
-        Status = StatusVenda.Confirmada;
     }
 
     public static Venda CriarAvista(
