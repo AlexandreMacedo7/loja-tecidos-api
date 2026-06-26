@@ -1,6 +1,6 @@
 using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Domain.Entities;
-using LojaTecidos.Domain.Entities.Enum;
+using LojaTecidos.Domain.Exceptions;
 using LojaTecidos.Infrastructure.Persistence.Entities;
 using LojaTecidos.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +50,7 @@ public class ClienteRepository : IClienteRepository
             .FirstOrDefaultAsync(c => c.Id == cliente.Id, cancellationToken);
 
         if (entity is null)
-            throw new InvalidOperationException($"Cliente {cliente.Id} não encontrado.");
+            throw new EntidadeNaoEncontradaException($"Cliente {cliente.Id} não encontrado.");
 
         entity.Nome = cliente.Nome;
         entity.Telefone = cliente.Telefone;

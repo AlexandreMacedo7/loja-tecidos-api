@@ -1,6 +1,29 @@
 @LojaTecidos.Api_HostAddress = http://localhost:5051
 
-GET {{LojaTecidos.Api_HostAddress}}/weatherforecast/
+### Clientes
+GET {{LojaTecidos.Api_HostAddress}}/api/clientes
 Accept: application/json
 
 ###
+POST {{LojaTecidos.Api_HostAddress}}/api/clientes
+Content-Type: application/json
+
+{
+  "nome": "Maria Silva",
+  "telefone": "92999999999",
+  "rua": "Rua A",
+  "numero": "10",
+  "bairro": "Centro"
+}
+
+### Produtos
+GET {{LojaTecidos.Api_HostAddress}}/api/produtos
+Accept: application/json
+
+###
+GET {{LojaTecidos.Api_HostAddress}}/api/produtos/alertas
+Accept: application/json
+
+### Vendas
+GET {{LojaTecidos.Api_HostAddress}}/api/vendas/VND-EXEMPLO
+Accept: application/json

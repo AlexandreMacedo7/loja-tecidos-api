@@ -1,5 +1,6 @@
 using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Domain.Entities;
+using LojaTecidos.Domain.Exceptions;
 using LojaTecidos.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,7 +56,7 @@ public class VendaRepository : IVendaRepository
             .FirstOrDefaultAsync(v => v.Id == venda.Id, cancellationToken);
 
         if (entity is null)
-            throw new InvalidOperationException($"Venda {venda.CodigoVenda} não encontrada.");
+            throw new EntidadeNaoEncontradaException($"Venda {venda.CodigoVenda} não encontrada.");
 
         VendaMapper.UpdateEntity(venda, entity, entity.ClienteId);
     }

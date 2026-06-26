@@ -30,6 +30,24 @@ public class CadastrarClienteUseCaseTests
         Assert.Equal(1, repository.Adicionados);
         Assert.Equal(1, unitOfWork.Salvamentos);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_CpfFormatado_DeveNormalizarAntesDePersistir()
+    {
+        var repository = new ClienteRepositoryFake();
+        var unitOfWork = new UnitOfWorkFake();
+        var useCase = new CadastrarClienteUseCase(repository, unitOfWork);
+
+        var resultado = await useCase.ExecuteAsync(new CadastrarClienteRequest(
+            "Maria",
+            "92999999999",
+            "Rua A",
+            "10",
+            "Centro",
+            Cpf: "055.040.752-49"));
+
+        Assert.Equal("05504075249", resultado.Cpf);
+    }
 }
 
 internal sealed class ClienteRepositoryFake : IClienteRepository

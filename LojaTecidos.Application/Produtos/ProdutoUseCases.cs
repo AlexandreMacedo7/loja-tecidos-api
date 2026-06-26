@@ -4,6 +4,7 @@ using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Common.Mappings;
 using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.Entities.Enum;
+using LojaTecidos.Domain.Exceptions;
 
 namespace LojaTecidos.Application.Produtos;
 
@@ -153,7 +154,7 @@ public sealed class RegistrarEntradaEstoqueUseCase : IUseCase<RegistrarEntradaEs
 
     private async Task<Produto> ObterProdutoOuFalharAsync(string codigoInterno, CancellationToken cancellationToken) =>
         await _produtoRepository.ObterPorCodigoInternoAsync(codigoInterno, cancellationToken)
-        ?? throw new InvalidOperationException($"Produto {codigoInterno} não encontrado.");
+        ?? throw new EntidadeNaoEncontradaException($"Produto {codigoInterno} não encontrado.");
 }
 
 public sealed record AtualizarEstoqueRequest(
@@ -178,7 +179,7 @@ public sealed class AtualizarEstoqueUseCase : IUseCase<AtualizarEstoqueRequest, 
         CancellationToken cancellationToken = default)
     {
         var produto = await _produtoRepository.ObterPorCodigoInternoAsync(request.CodigoInterno, cancellationToken)
-            ?? throw new InvalidOperationException($"Produto {request.CodigoInterno} não encontrado.");
+            ?? throw new EntidadeNaoEncontradaException($"Produto {request.CodigoInterno} não encontrado.");
 
         produto.AtualizarEstoque(request.NovaQuantidade, request.Data);
         await _produtoRepository.AtualizarAsync(produto, cancellationToken);

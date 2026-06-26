@@ -3,6 +3,7 @@ using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Common.Mappings;
 using LojaTecidos.Domain.Entities;
+using LojaTecidos.Domain.Exceptions;
 using LojaTecidos.Domain.Services;
 
 namespace LojaTecidos.Application.Vendas;
@@ -41,8 +42,9 @@ public sealed class RegistrarVendaAvistaUseCase : IUseCase<RegistrarVendaAvistaR
         RegistrarVendaAvistaRequest request,
         CancellationToken cancellationToken = default)
     {
-        var produtos = await CarregarProdutosAsync(request.Itens, cancellationToken);
-        var itens = CriarItensVenda(request.Itens, produtos);
+        var produtos = await VendaProdutoHelper.CarregarProdutosAsync(
+            _produtoRepository, request.Itens, cancellationToken);
+        var itens = VendaProdutoHelper.CriarItensVenda(request.Itens, produtos);
         var numeroSequencial = await _vendaRepository.ObterProximoNumeroSequencialAsync(cancellationToken);
         var codigoVenda = _geradorCodigoVenda.Gerar(request.DataVenda);
 
@@ -63,30 +65,6 @@ public sealed class RegistrarVendaAvistaUseCase : IUseCase<RegistrarVendaAvistaR
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return DomainMapper.ToDto(venda);
-    }
-
-    private static List<ItemVenda> CriarItensVenda(
-        IReadOnlyList<ItemVendaRequest> itensRequest,
-        IReadOnlyDictionary<string, Produto> produtos) =>
-        itensRequest
-            .Select(item => ItemVenda.Criar(produtos[item.CodigoInternoProduto.Trim()], item.Quantidade))
-            .ToList();
-
-    private async Task<Dictionary<string, Produto>> CarregarProdutosAsync(
-        IReadOnlyList<ItemVendaRequest> itens,
-        CancellationToken cancellationToken)
-    {
-        var codigos = itens.Select(i => i.CodigoInternoProduto.Trim()).Distinct().ToList();
-        var produtos = await _produtoRepository.ObterPorCodigosInternosAsync(codigos, cancellationToken);
-
-        if (produtos.Count != codigos.Count)
-        {
-            var encontrados = produtos.Select(p => p.CodigoInterno).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var faltante = codigos.First(c => !encontrados.Contains(c));
-            throw new InvalidOperationException($"Produto {faltante} não encontrado.");
-        }
-
-        return produtos.ToDictionary(p => p.CodigoInterno, StringComparer.OrdinalIgnoreCase);
     }
 }
 
@@ -128,10 +106,11 @@ public sealed class RegistrarVendaFiadoUseCase : IUseCase<RegistrarVendaFiadoReq
         CancellationToken cancellationToken = default)
     {
         var cliente = await _clienteRepository.ObterPorIdAsync(request.ClienteId, cancellationToken)
-            ?? throw new InvalidOperationException($"Cliente {request.ClienteId} não encontrado.");
+            ?? throw new EntidadeNaoEncontradaException($"Cliente {request.ClienteId} não encontrado.");
 
-        var produtos = await CarregarProdutosAsync(request.Itens, cancellationToken);
-        var itens = CriarItensVenda(request.Itens, produtos);
+        var produtos = await VendaProdutoHelper.CarregarProdutosAsync(
+            _produtoRepository, request.Itens, cancellationToken);
+        var itens = VendaProdutoHelper.CriarItensVenda(request.Itens, produtos);
         var numeroSequencial = await _vendaRepository.ObterProximoNumeroSequencialAsync(cancellationToken);
         var codigoVenda = _geradorCodigoVenda.Gerar(request.DataVenda);
 
@@ -155,30 +134,6 @@ public sealed class RegistrarVendaFiadoUseCase : IUseCase<RegistrarVendaFiadoReq
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return DomainMapper.ToDto(venda);
-    }
-
-    private static List<ItemVenda> CriarItensVenda(
-        IReadOnlyList<ItemVendaRequest> itensRequest,
-        IReadOnlyDictionary<string, Produto> produtos) =>
-        itensRequest
-            .Select(item => ItemVenda.Criar(produtos[item.CodigoInternoProduto.Trim()], item.Quantidade))
-            .ToList();
-
-    private async Task<Dictionary<string, Produto>> CarregarProdutosAsync(
-        IReadOnlyList<ItemVendaRequest> itens,
-        CancellationToken cancellationToken)
-    {
-        var codigos = itens.Select(i => i.CodigoInternoProduto.Trim()).Distinct().ToList();
-        var produtos = await _produtoRepository.ObterPorCodigosInternosAsync(codigos, cancellationToken);
-
-        if (produtos.Count != codigos.Count)
-        {
-            var encontrados = produtos.Select(p => p.CodigoInterno).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var faltante = codigos.First(c => !encontrados.Contains(c));
-            throw new InvalidOperationException($"Produto {faltante} não encontrado.");
-        }
-
-        return produtos.ToDictionary(p => p.CodigoInterno, StringComparer.OrdinalIgnoreCase);
     }
 }
 
@@ -211,7 +166,7 @@ public sealed class RegistrarDevolucaoUseCase : IUseCase<RegistrarDevolucaoReque
         CancellationToken cancellationToken = default)
     {
         var venda = await _vendaRepository.ObterPorCodigoAsync(request.CodigoVenda, cancellationToken)
-            ?? throw new InvalidOperationException($"Venda {request.CodigoVenda} não encontrada.");
+            ?? throw new EntidadeNaoEncontradaException($"Venda {request.CodigoVenda} não encontrada.");
 
         var produtos = await CarregarProdutosDaVendaAsync(venda, cancellationToken);
         Cliente? cliente = null;
@@ -221,11 +176,11 @@ public sealed class RegistrarDevolucaoUseCase : IUseCase<RegistrarDevolucaoReque
             var clienteId = await _vendaRepository.ObterClienteIdPorCodigoVendaAsync(
                 request.CodigoVenda,
                 cancellationToken)
-                ?? throw new InvalidOperationException(
+                ?? throw new EntidadeNaoEncontradaException(
                     $"Cliente da venda fiado {request.CodigoVenda} não encontrado.");
 
             cliente = await _clienteRepository.ObterPorIdAsync(clienteId, cancellationToken)
-                ?? throw new InvalidOperationException($"Cliente {clienteId} não encontrado.");
+                ?? throw new EntidadeNaoEncontradaException($"Cliente {clienteId} não encontrado.");
         }
 
         _servicoVenda.RegistrarDevolucao(venda, request.DataDevolucao, produtos, cliente);

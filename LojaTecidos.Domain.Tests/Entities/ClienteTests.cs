@@ -145,6 +145,20 @@ public class ClienteTests
     }
 
     [Fact]
+    public void CriarCliente_ComCpfFormatado_DeveNormalizarParaDigitos()
+    {
+        var cliente = CriarCliente(cpf: "055.040.752-49");
+
+        Assert.Equal("05504075249", cliente.Cpf);
+    }
+
+    [Fact]
+    public void CriarCliente_ComCpfInvalido_DeveLancarExcecao()
+    {
+        Assert.Throws<ArgumentException>(() => CriarCliente(cpf: "123"));
+    }
+
+    [Fact]
     public void AlterarPerfil_Manualmente_DeveAtualizarLimite()
     {
         var cliente = CriarCliente();

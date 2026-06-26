@@ -1,5 +1,6 @@
 using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.Entities.Enum;
+using LojaTecidos.Domain.Exceptions;
 
 namespace LojaTecidos.Domain.Services;
 
@@ -92,7 +93,7 @@ public class ServicoVenda
     private static Produto ObterProduto(IReadOnlyDictionary<string, Produto> produtos, string codigoInterno)
     {
         if (!produtos.TryGetValue(codigoInterno, out var produto))
-            throw new InvalidOperationException($"Produto {codigoInterno} não encontrado.");
+            throw new EntidadeNaoEncontradaException($"Produto {codigoInterno} não encontrado.");
 
         return produto;
     }

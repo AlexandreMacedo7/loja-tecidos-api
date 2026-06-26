@@ -4,6 +4,7 @@ using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Common.Mappings;
 using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.Entities.Enum;
+using LojaTecidos.Domain.Exceptions;
 
 namespace LojaTecidos.Application.Clientes;
 
@@ -38,7 +39,7 @@ public sealed class AlterarPerfilClienteUseCase : IUseCase<AlterarPerfilClienteR
         CancellationToken cancellationToken)
     {
         return await _clienteRepository.ObterPorIdAsync(clienteId, cancellationToken)
-            ?? throw new InvalidOperationException($"Cliente {clienteId} não encontrado.");
+            ?? throw new EntidadeNaoEncontradaException($"Cliente {clienteId} não encontrado.");
     }
 }
 
@@ -60,7 +61,7 @@ public sealed class AlterarBloqueioClienteUseCase : IUseCase<AlterarBloqueioClie
         CancellationToken cancellationToken = default)
     {
         var cliente = await _clienteRepository.ObterPorIdAsync(request.ClienteId, cancellationToken)
-            ?? throw new InvalidOperationException($"Cliente {request.ClienteId} não encontrado.");
+            ?? throw new EntidadeNaoEncontradaException($"Cliente {request.ClienteId} não encontrado.");
 
         if (request.Bloqueado)
             cliente.Bloquear();
@@ -96,7 +97,7 @@ public sealed class RegistrarPagamentoFiadoUseCase : IUseCase<RegistrarPagamento
         CancellationToken cancellationToken = default)
     {
         var cliente = await _clienteRepository.ObterPorIdAsync(request.ClienteId, cancellationToken)
-            ?? throw new InvalidOperationException($"Cliente {request.ClienteId} não encontrado.");
+            ?? throw new EntidadeNaoEncontradaException($"Cliente {request.ClienteId} não encontrado.");
 
         cliente.RegistrarPagamentoFiado(
             request.Valor,

@@ -1,5 +1,6 @@
 using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Domain.Entities;
+using LojaTecidos.Domain.Exceptions;
 using LojaTecidos.Infrastructure.Persistence.Entities;
 using LojaTecidos.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
@@ -63,7 +64,7 @@ public class ProdutoRepository : IProdutoRepository
             .FirstOrDefaultAsync(p => p.Id == produto.Id, cancellationToken);
 
         if (entity is null)
-            throw new InvalidOperationException($"Produto {produto.CodigoInterno} não encontrado.");
+            throw new EntidadeNaoEncontradaException($"Produto {produto.CodigoInterno} não encontrado.");
 
         var fornecedorId = await ObterOuCriarFornecedorIdAsync(produto.Fornecedor, cancellationToken);
 

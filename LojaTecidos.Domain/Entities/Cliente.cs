@@ -32,8 +32,8 @@ public class Cliente
         Nome = nome.Trim();
         Telefone = telefone.Trim();
         Endereco = endereco;
-        Cpf = NormalizarDocumento(cpf);
-        Cnpj = NormalizarDocumento(cnpj);
+        Cpf = DocumentoIdentificacao.NormalizarCpf(cpf);
+        Cnpj = DocumentoIdentificacao.NormalizarCnpj(cnpj);
         PerfilCredito = perfilCredito ?? new PerfilCredito(CategoriaPerfil.BRONZE);
     }
 
@@ -81,8 +81,8 @@ public class Cliente
         Nome = nome.Trim();
         Telefone = telefone.Trim();
         Endereco = endereco;
-        Cpf = NormalizarDocumento(cpf);
-        Cnpj = NormalizarDocumento(cnpj);
+        Cpf = DocumentoIdentificacao.NormalizarCpf(cpf);
+        Cnpj = DocumentoIdentificacao.NormalizarCnpj(cnpj);
         PerfilCredito = new PerfilCredito(categoriaPerfil);
         Bloqueado = bloqueado;
         ContaFiadoAtiva = contaFiadoAtiva;
@@ -147,6 +147,4 @@ public class Cliente
             throw new ArgumentException("Informe apenas CPF ou CNPJ.");
     }
 
-    private static string? NormalizarDocumento(string? documento) =>
-        string.IsNullOrWhiteSpace(documento) ? null : documento.Trim();
 }
