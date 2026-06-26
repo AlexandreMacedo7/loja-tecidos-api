@@ -1,6 +1,7 @@
 using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Clientes;
 using LojaTecidos.Application.Common.Dtos;
+using LojaTecidos.Application.Common.Paginacao;
 using LojaTecidos.Api.Authorization;
 using LojaTecidos.Api.Extensions;
 using LojaTecidos.Domain.Entities.Enum;
@@ -26,11 +27,15 @@ public static class ClienteEndpoints
             .RequireAuthorization(authorization);
 
         app.MapGet("/api/clientes", async (
-            IUseCase<ListarClientesRequest, IReadOnlyList<ClienteDto>> useCase,
+            int? pagina,
+            int? tamanhoPagina,
+            IUseCase<ListarClientesRequest, ResultadoPaginadoDto<ClienteDto>> useCase,
             CancellationToken cancellationToken) =>
             await UseCaseEndpointExtensions.ExecuteAsync(
                 useCase,
-                new ListarClientesRequest(),
+                new ListarClientesRequest(
+                    pagina ?? 1,
+                    tamanhoPagina ?? PaginacaoParametros.TamanhoPaginaPadrao),
                 Results.Ok,
                 cancellationToken))
             .WithTags("Clientes")

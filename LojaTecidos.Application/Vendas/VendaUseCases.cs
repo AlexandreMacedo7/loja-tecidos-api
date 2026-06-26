@@ -2,6 +2,7 @@ using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Common.Mappings;
+using LojaTecidos.Application.Common.Validation;
 using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.Exceptions;
 using LojaTecidos.Domain.Services;
@@ -42,6 +43,10 @@ public sealed class RegistrarVendaAvistaUseCase : IUseCase<RegistrarVendaAvistaR
         RegistrarVendaAvistaRequest request,
         CancellationToken cancellationToken = default)
     {
+        VendaRequestValidator.ValidarUsuarioId(request.UsuarioId);
+        VendaRequestValidator.ValidarItens(request.Itens);
+        VendaRequestValidator.ValidarDesconto(request.DescontoPercentual);
+
         var produtos = await VendaProdutoHelper.CarregarProdutosAsync(
             _produtoRepository, request.Itens, cancellationToken);
         var itens = VendaProdutoHelper.CriarItensVenda(request.Itens, produtos);
@@ -105,6 +110,16 @@ public sealed class RegistrarVendaFiadoUseCase : IUseCase<RegistrarVendaFiadoReq
         RegistrarVendaFiadoRequest request,
         CancellationToken cancellationToken = default)
     {
+        VendaRequestValidator.ValidarUsuarioId(request.UsuarioId);
+        VendaRequestValidator.ValidarItens(request.Itens);
+        VendaRequestValidator.ValidarDesconto(request.DescontoPercentual);
+
+        if (request.ClienteId == Guid.Empty)
+            throw new ArgumentException("ClienteId é obrigatório.");
+
+        if (request.DataVencimento <= request.DataVenda)
+            throw new ArgumentException("Data de vencimento deve ser posterior à data da venda.");
+
         var cliente = await _clienteRepository.ObterPorIdAsync(request.ClienteId, cancellationToken)
             ?? throw new EntidadeNaoEncontradaException($"Cliente {request.ClienteId} não encontrado.");
 

@@ -72,6 +72,8 @@ Content-Type: application/json
 
 Use o token retornado no header: `Authorization: Bearer {token}`
 
+No Scalar (`/scalar/v1`), use o botão **Authorize** e informe `Bearer {token}`.
+
 ### Permissões
 
 | Operação | Gerente | Admin |
@@ -79,6 +81,25 @@ Use o token retornado no header: `Authorization: Bearer {token}`
 | Clientes, produtos, vendas | Sim | Sim |
 | Alterar perfil de crédito | Não | Sim |
 | Bloquear/desbloquear cliente | Não | Sim |
+
+### Paginação
+
+Listagens de clientes e produtos aceitam query params:
+
+- `pagina` (padrão: 1)
+- `tamanhoPagina` (padrão: 20, máximo: 100)
+
+Resposta:
+
+```json
+{
+  "itens": [],
+  "pagina": 1,
+  "tamanhoPagina": 20,
+  "totalItens": 0,
+  "totalPaginas": 0
+}
+```
 
 ## CORS
 

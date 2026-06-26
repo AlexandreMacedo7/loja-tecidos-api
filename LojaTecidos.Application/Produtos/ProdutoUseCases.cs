@@ -2,6 +2,8 @@ using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Common.Mappings;
+using LojaTecidos.Application.Common.Paginacao;
+using LojaTecidos.Application.Common.Validation;
 using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.Entities.Enum;
 using LojaTecidos.Domain.Exceptions;
@@ -39,6 +41,8 @@ public sealed class CadastrarProdutoUseCase : IUseCase<CadastrarProdutoRequest, 
         CadastrarProdutoRequest request,
         CancellationToken cancellationToken = default)
     {
+        CadastrarProdutoRequestValidator.Validar(request);
+
         var fornecedor = await ObterOuCriarFornecedorAsync(request.NomeFornecedor, cancellationToken);
         var codigoInterno = string.IsNullOrWhiteSpace(request.CodigoInterno)
             ? $"INT-{Guid.NewGuid():N}"[..12].ToUpperInvariant()
@@ -100,9 +104,12 @@ public sealed class ObterProdutoUseCase : IUseCase<ObterProdutoRequest, ProdutoD
     }
 }
 
-public sealed record ListarProdutosRequest(DateTime DataReferenciaAlertas);
+public sealed record ListarProdutosRequest(
+    DateTime DataReferenciaAlertas,
+    int Pagina = 1,
+    int TamanhoPagina = PaginacaoParametros.TamanhoPaginaPadrao);
 
-public sealed class ListarProdutosUseCase : IUseCase<ListarProdutosRequest, IReadOnlyList<ProdutoDto>>
+public sealed class ListarProdutosUseCase : IUseCase<ListarProdutosRequest, ResultadoPaginadoDto<ProdutoDto>>
 {
     private readonly IProdutoRepository _produtoRepository;
 
@@ -111,14 +118,18 @@ public sealed class ListarProdutosUseCase : IUseCase<ListarProdutosRequest, IRea
         _produtoRepository = produtoRepository;
     }
 
-    public async Task<IReadOnlyList<ProdutoDto>> ExecuteAsync(
+    public async Task<ResultadoPaginadoDto<ProdutoDto>> ExecuteAsync(
         ListarProdutosRequest request,
         CancellationToken cancellationToken = default)
     {
-        var produtos = await _produtoRepository.ListarAsync(cancellationToken);
-        return produtos
+        var (pagina, tamanhoPagina) = PaginacaoParametros.Normalizar(request.Pagina, request.TamanhoPagina);
+        var resultado = await _produtoRepository.ListarPaginadoAsync(pagina, tamanhoPagina, cancellationToken);
+
+        var itens = resultado.Itens
             .Select(p => DomainMapper.ToDto(p, request.DataReferenciaAlertas))
             .ToList();
+
+        return PaginacaoParametros.Criar(itens, pagina, tamanhoPagina, resultado.TotalItens);
     }
 }
 

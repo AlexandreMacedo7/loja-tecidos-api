@@ -3,6 +3,7 @@ using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Produtos;
 using LojaTecidos.Api.Authorization;
 using LojaTecidos.Api.Extensions;
+using LojaTecidos.Application.Common.Paginacao;
 using LojaTecidos.Domain.Entities.Enum;
 
 namespace LojaTecidos.Api.Endpoints;
@@ -11,11 +12,9 @@ public static class ProdutoEndpoints
 {
     public static IEndpointRouteBuilder MapProdutoEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/produtos")
-            .WithTags("Produtos")
-            .RequireAuthorization(PoliticasAutorizacao.GerenteOuAdmin);
+        var authorization = PoliticasAutorizacao.GerenteOuAdmin;
 
-        group.MapPost("/", async (
+        app.MapPost("/api/produtos", async (
             CadastrarProdutoBody body,
             IUseCase<CadastrarProdutoRequest, ProdutoDto> useCase,
             CancellationToken cancellationToken) =>
@@ -35,25 +34,40 @@ public static class ProdutoEndpoints
                     body.CodigoFornecedor),
                 dto => Results.Created($"/api/produtos/{dto.CodigoInterno}", dto),
                 cancellationToken);
-        });
+        })
+        .WithTags("Produtos")
+        .RequireAuthorization(authorization);
 
-        group.MapGet("/", async (
-            IUseCase<ListarProdutosRequest, IReadOnlyList<ProdutoDto>> useCase,
+        app.MapGet("/api/produtos", async (
+            int? pagina,
+            int? tamanhoPagina,
+            IUseCase<ListarProdutosRequest, ResultadoPaginadoDto<ProdutoDto>> useCase,
             CancellationToken cancellationToken) =>
             await UseCaseEndpointExtensions.ExecuteAsync(
                 useCase,
-                new ListarProdutosRequest(DataHoraLoja.Agora),
+                new ListarProdutosRequest(
+                    DataHoraLoja.Agora,
+                    pagina ?? 1,
+                    tamanhoPagina ?? PaginacaoParametros.TamanhoPaginaPadrao),
                 Results.Ok,
-                cancellationToken));
+                cancellationToken))
+        .WithTags("Produtos")
+        .RequireAuthorization(authorization);
 
-        group.MapGet("/alertas", async (
+        app.MapGet("/api/produtos/alertas", async (
             IUseCase<ListarAlertasEstoqueRequest, IReadOnlyList<AlertaEstoqueDto>> useCase,
             CancellationToken cancellationToken) =>
             await UseCaseEndpointExtensions.ExecuteAsync(
                 useCase,
                 new ListarAlertasEstoqueRequest(DataHoraLoja.Agora),
                 Results.Ok,
-                cancellationToken));
+                cancellationToken))
+        .WithTags("Produtos")
+        .RequireAuthorization(authorization);
+
+        var group = app.MapGroup("/api/produtos")
+            .WithTags("Produtos")
+            .RequireAuthorization(authorization);
 
         group.MapGet("/{codigoInterno}", async (
             string codigoInterno,

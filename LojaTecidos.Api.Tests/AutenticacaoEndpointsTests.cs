@@ -5,6 +5,7 @@ using LojaTecidos.Application.Common.Dtos;
 
 namespace LojaTecidos.Api.Tests;
 
+[Collection("Api")]
 public class AutenticacaoEndpointsTests : IClassFixture<LojaTecidosApiFactory>
 {
     private readonly HttpClient _client;

@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using LojaTecidos.Api.Authorization;
 using LojaTecidos.Domain.Constants;
@@ -38,6 +39,7 @@ internal static class AuthExtensions
                     ValidAudience = settings.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(settings.ChaveSecreta)),
+                    NameClaimType = JwtRegisteredClaimNames.Sub,
                     RoleClaimType = "role"
                 };
             });

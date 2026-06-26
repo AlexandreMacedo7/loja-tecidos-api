@@ -2,6 +2,7 @@ using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Common.Mappings;
+using LojaTecidos.Application.Common.Validation;
 using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.ValueObjects;
 
@@ -32,6 +33,8 @@ public sealed class CadastrarClienteUseCase : IUseCase<CadastrarClienteRequest, 
         CadastrarClienteRequest request,
         CancellationToken cancellationToken = default)
     {
+        CadastrarClienteRequestValidator.Validar(request);
+
         var cliente = new Cliente(
             request.Nome,
             request.Telefone,

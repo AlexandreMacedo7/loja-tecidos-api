@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Autenticacao;
 using LojaTecidos.Application.Common.Dtos;
@@ -31,10 +30,4 @@ public static class AuthEndpoints
     }
 
     private sealed record LoginBody(string Email, string Senha);
-}
-
-internal static class ClaimsPrincipalExtensions
-{
-    public static string? ObterUsuarioId(this ClaimsPrincipal usuario) =>
-        usuario.FindFirstValue(ClaimTypes.NameIdentifier);
 }

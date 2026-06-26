@@ -26,15 +26,24 @@ public class ClienteRepository : IClienteRepository
         return entity is null ? null : ClienteMapper.ToDomain(entity);
     }
 
-    public async Task<IReadOnlyList<Cliente>> ListarAsync(CancellationToken cancellationToken = default)
+    public async Task<ResultadoConsultaPaginada<Cliente>> ListarPaginadoAsync(
+        int pagina,
+        int tamanhoPagina,
+        CancellationToken cancellationToken = default)
     {
-        var entities = await _context.Clientes
+        var query = _context.Clientes
             .AsNoTracking()
             .Include(c => c.ContasFiado)
-            .OrderBy(c => c.Nome)
+            .OrderBy(c => c.Nome);
+
+        var total = await query.CountAsync(cancellationToken);
+        var entities = await query
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
             .ToListAsync(cancellationToken);
 
-        return entities.Select(ClienteMapper.ToDomain).ToList();
+        var itens = entities.Select(ClienteMapper.ToDomain).ToList();
+        return new ResultadoConsultaPaginada<Cliente>(itens, total);
     }
 
     public async Task AdicionarAsync(Cliente cliente, CancellationToken cancellationToken = default)

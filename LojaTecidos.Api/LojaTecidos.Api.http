@@ -12,12 +12,13 @@ Content-Type: application/json
 }
 
 ### Clientes
-GET {{LojaTecidos.Api_HostAddress}}/api/clientes
+GET {{LojaTecidos.Api_HostAddress}}/api/clientes?pagina=1&tamanhoPagina=20
 Authorization: Bearer {{token}}
 Accept: application/json
 
 ###
 POST {{LojaTecidos.Api_HostAddress}}/api/clientes
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -29,13 +30,16 @@ Content-Type: application/json
 }
 
 ### Produtos
-GET {{LojaTecidos.Api_HostAddress}}/api/produtos
+GET {{LojaTecidos.Api_HostAddress}}/api/produtos?pagina=1&tamanhoPagina=20
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ###
 GET {{LojaTecidos.Api_HostAddress}}/api/produtos/alertas
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Vendas
 GET {{LojaTecidos.Api_HostAddress}}/api/vendas/VND-EXEMPLO
+Authorization: Bearer {{token}}
 Accept: application/json

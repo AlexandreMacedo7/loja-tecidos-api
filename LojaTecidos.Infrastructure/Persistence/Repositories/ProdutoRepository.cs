@@ -27,6 +27,25 @@ public class ProdutoRepository : IProdutoRepository
         return entity is null ? null : ProdutoMapper.ToDomain(entity);
     }
 
+    public async Task<ResultadoConsultaPaginada<Produto>> ListarPaginadoAsync(
+        int pagina,
+        int tamanhoPagina,
+        CancellationToken cancellationToken = default)
+    {
+        var query = ObterQueryCompleta()
+            .AsNoTracking()
+            .OrderBy(p => p.Nome);
+
+        var total = await query.CountAsync(cancellationToken);
+        var entities = await query
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .ToListAsync(cancellationToken);
+
+        var itens = entities.Select(ProdutoMapper.ToDomain).ToList();
+        return new ResultadoConsultaPaginada<Produto>(itens, total);
+    }
+
     public async Task<IReadOnlyList<Produto>> ListarAsync(CancellationToken cancellationToken = default)
     {
         var entities = await ObterQueryCompleta()
@@ -105,6 +124,11 @@ public class ProdutoRepository : IProdutoRepository
         Fornecedor fornecedor,
         CancellationToken cancellationToken)
     {
+        var local = _context.Fornecedores.Local
+            .FirstOrDefault(f => f.Id == fornecedor.Id || f.Nome == fornecedor.Nome);
+        if (local is not null)
+            return local.Id;
+
         var entity = await _context.Fornecedores
             .FirstOrDefaultAsync(f => f.Id == fornecedor.Id || f.Nome == fornecedor.Nome, cancellationToken);
 

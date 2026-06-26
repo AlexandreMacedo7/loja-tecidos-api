@@ -52,10 +52,28 @@ public class CadastrarClienteUseCaseTests
 
 internal sealed class ClienteRepositoryFake : IClienteRepository
 {
+    private readonly List<Cliente> _clientes = [];
+
     public int Adicionados { get; private set; }
+
+    public Task<ResultadoConsultaPaginada<Cliente>> ListarPaginadoAsync(
+        int pagina,
+        int tamanhoPagina,
+        CancellationToken cancellationToken = default)
+    {
+        var total = _clientes.Count;
+        var itens = _clientes
+            .OrderBy(c => c.Nome)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .ToList();
+
+        return Task.FromResult(new ResultadoConsultaPaginada<Cliente>(itens, total));
+    }
 
     public Task AdicionarAsync(Cliente cliente, CancellationToken cancellationToken = default)
     {
+        _clientes.Add(cliente);
         Adicionados++;
         return Task.CompletedTask;
     }
@@ -64,10 +82,7 @@ internal sealed class ClienteRepositoryFake : IClienteRepository
         Task.CompletedTask;
 
     public Task<Cliente?> ObterPorIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        Task.FromResult<Cliente?>(null);
-
-    public Task<IReadOnlyList<Cliente>> ListarAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<Cliente>>([]);
+        Task.FromResult(_clientes.FirstOrDefault(c => c.Id == id));
 }
 
 internal sealed class UnitOfWorkFake : IUnitOfWork

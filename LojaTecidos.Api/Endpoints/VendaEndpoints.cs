@@ -10,31 +10,42 @@ public static class VendaEndpoints
 {
     public static IEndpointRouteBuilder MapVendaEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/vendas")
-            .WithTags("Vendas")
-            .RequireAuthorization(PoliticasAutorizacao.GerenteOuAdmin);
+        var authorization = PoliticasAutorizacao.GerenteOuAdmin;
 
-        group.MapPost("/avista", async (
+        app.MapPost("/api/vendas/avista", async (
             RegistrarVendaAvistaBody body,
             HttpContext httpContext,
             IUseCase<RegistrarVendaAvistaRequest, VendaDto> useCase,
             CancellationToken cancellationToken) =>
-            await UseCaseEndpointExtensions.ExecuteAsync(
+        {
+            var usuarioId = httpContext.User.ObterUsuarioId();
+            if (string.IsNullOrWhiteSpace(usuarioId))
+                return Results.Unauthorized();
+
+            return await UseCaseEndpointExtensions.ExecuteAsync(
                 useCase,
                 new RegistrarVendaAvistaRequest(
                     body.DataVenda ?? DataHoraLoja.Agora,
                     body.Itens,
                     body.DescontoPercentual,
-                    httpContext.User.ObterUsuarioId()),
+                    usuarioId),
                 dto => Results.Created($"/api/vendas/{dto.CodigoVenda}", dto),
-                cancellationToken));
+                cancellationToken);
+        })
+        .WithTags("Vendas")
+        .RequireAuthorization(authorization);
 
-        group.MapPost("/fiado", async (
+        app.MapPost("/api/vendas/fiado", async (
             RegistrarVendaFiadoBody body,
             HttpContext httpContext,
             IUseCase<RegistrarVendaFiadoRequest, VendaDto> useCase,
             CancellationToken cancellationToken) =>
-            await UseCaseEndpointExtensions.ExecuteAsync(
+        {
+            var usuarioId = httpContext.User.ObterUsuarioId();
+            if (string.IsNullOrWhiteSpace(usuarioId))
+                return Results.Unauthorized();
+
+            return await UseCaseEndpointExtensions.ExecuteAsync(
                 useCase,
                 new RegistrarVendaFiadoRequest(
                     body.ClienteId,
@@ -42,9 +53,16 @@ public static class VendaEndpoints
                     body.DataVencimento,
                     body.Itens,
                     body.DescontoPercentual,
-                    httpContext.User.ObterUsuarioId()),
+                    usuarioId),
                 dto => Results.Created($"/api/vendas/{dto.CodigoVenda}", dto),
-                cancellationToken));
+                cancellationToken);
+        })
+        .WithTags("Vendas")
+        .RequireAuthorization(authorization);
+
+        var group = app.MapGroup("/api/vendas")
+            .WithTags("Vendas")
+            .RequireAuthorization(authorization);
 
         group.MapPost("/{codigoVenda}/devolucao", async (
             string codigoVenda,

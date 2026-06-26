@@ -27,7 +27,8 @@ public static class DependencyInjection
         {
             if (environment.IsEnvironment("Testing"))
             {
-                options.UseInMemoryDatabase("LojaTecidosTests");
+                var databaseName = configuration["Testing:InMemoryDatabaseName"] ?? "LojaTecidosTests";
+                options.UseInMemoryDatabase(databaseName);
                 return;
             }
 

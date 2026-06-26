@@ -3,6 +3,7 @@ using LojaTecidos.Application.Abstractions.Persistence;
 using LojaTecidos.Application.Autenticacao;
 using LojaTecidos.Application.Clientes;
 using LojaTecidos.Application.Common.Dtos;
+using LojaTecidos.Application.Common.Paginacao;
 using LojaTecidos.Application.Produtos;
 using LojaTecidos.Application.Services;
 using LojaTecidos.Application.Vendas;
@@ -20,14 +21,14 @@ public static class DependencyInjection
 
         RegisterUseCase<CadastrarClienteRequest, ClienteDto, CadastrarClienteUseCase>(services);
         RegisterUseCase<ObterClienteRequest, ClienteDto?, ObterClienteUseCase>(services);
-        RegisterUseCase<ListarClientesRequest, IReadOnlyList<ClienteDto>, ListarClientesUseCase>(services);
+        RegisterUseCase<ListarClientesRequest, ResultadoPaginadoDto<ClienteDto>, ListarClientesUseCase>(services);
         RegisterUseCase<AlterarPerfilClienteRequest, ClienteDto, AlterarPerfilClienteUseCase>(services);
         RegisterUseCase<AlterarBloqueioClienteRequest, ClienteDto, AlterarBloqueioClienteUseCase>(services);
         RegisterUseCase<RegistrarPagamentoFiadoRequest, ClienteDto, RegistrarPagamentoFiadoUseCase>(services);
 
         RegisterUseCase<CadastrarProdutoRequest, ProdutoDto, CadastrarProdutoUseCase>(services);
         RegisterUseCase<ObterProdutoRequest, ProdutoDto?, ObterProdutoUseCase>(services);
-        RegisterUseCase<ListarProdutosRequest, IReadOnlyList<ProdutoDto>, ListarProdutosUseCase>(services);
+        RegisterUseCase<ListarProdutosRequest, ResultadoPaginadoDto<ProdutoDto>, ListarProdutosUseCase>(services);
         RegisterUseCase<RegistrarEntradaEstoqueRequest, ProdutoDto, RegistrarEntradaEstoqueUseCase>(services);
         RegisterUseCase<AtualizarEstoqueRequest, ProdutoDto, AtualizarEstoqueUseCase>(services);
         RegisterUseCase<ListarAlertasEstoqueRequest, IReadOnlyList<AlertaEstoqueDto>, ListarAlertasEstoqueUseCase>(services);
