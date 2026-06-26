@@ -47,6 +47,47 @@ Em Development, as migrations são aplicadas automaticamente na subida.
 | OpenAPI JSON | http://localhost:5051/openapi/v1.json |
 | Health check | http://localhost:5051/health |
 
+## Autenticação
+
+A API usa **JWT**. Endpoints de negócio exigem token, exceto login e health.
+
+### Usuários seed (Development / Testing)
+
+| E-mail | Senha | Papel |
+|--------|-------|-------|
+| `admin@emporiotecidos.com.br` | `Admin@123` | Admin |
+| `gerente@emporiotecidos.com.br` | `Gerente@123` | Gerente |
+
+### Login
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "gerente@emporiotecidos.com.br",
+  "senha": "Gerente@123"
+}
+```
+
+Use o token retornado no header: `Authorization: Bearer {token}`
+
+### Permissões
+
+| Operação | Gerente | Admin |
+|----------|---------|-------|
+| Clientes, produtos, vendas | Sim | Sim |
+| Alterar perfil de crédito | Não | Sim |
+| Bloquear/desbloquear cliente | Não | Sim |
+
+## CORS
+
+Em Development, origens configuradas em `appsettings.Development.json` (`Cors:Origens`), incluindo `http://localhost:5173` para frontends locais.
+
+## CI (GitHub Actions)
+
+O workflow `.github/workflows/ci.yml` executa `dotnet build` e `dotnet test` em cada push/PR na `main`. Não há deploy — tudo roda localmente ou no runner do GitHub.
+
 ## Testes
 
 ```powershell

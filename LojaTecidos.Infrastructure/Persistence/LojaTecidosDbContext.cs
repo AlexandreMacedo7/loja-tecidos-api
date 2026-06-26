@@ -1,9 +1,10 @@
 using LojaTecidos.Infrastructure.Persistence.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace LojaTecidos.Infrastructure.Persistence;
 
-public class LojaTecidosDbContext : DbContext
+public class LojaTecidosDbContext : IdentityDbContext<ApplicationUser>
 {
     public LojaTecidosDbContext(DbContextOptions<LojaTecidosDbContext> options)
         : base(options)

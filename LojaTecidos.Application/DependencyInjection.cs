@@ -1,5 +1,6 @@
 using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Abstractions.Persistence;
+using LojaTecidos.Application.Autenticacao;
 using LojaTecidos.Application.Clientes;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Produtos;
@@ -35,6 +36,8 @@ public static class DependencyInjection
         RegisterUseCase<RegistrarVendaFiadoRequest, VendaDto, RegistrarVendaFiadoUseCase>(services);
         RegisterUseCase<RegistrarDevolucaoRequest, VendaDto, RegistrarDevolucaoUseCase>(services);
         RegisterUseCase<ObterVendaRequest, VendaDto?, ObterVendaUseCase>(services);
+
+        RegisterUseCase<LoginUsuarioRequest, TokenAutenticacaoDto?, LoginUsuarioUseCase>(services);
 
         return services;
     }

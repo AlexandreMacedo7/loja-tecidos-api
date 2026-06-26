@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="LojaTecidos.Api/LojaTecidos.Api.csproj" />
+  <Project Path="LojaTecidos.Api.Tests/LojaTecidos.Api.Tests.csproj" />
   <Project Path="LojaTecidos.Application/LojaTecidos.Application.csproj" />
   <Project Path="LojaTecidos.Application.Tests/LojaTecidos.Application.Tests.csproj" />
   <Project Path="LojaTecidos.Domain.Tests/LojaTecidos.Domain.Tests.csproj" />

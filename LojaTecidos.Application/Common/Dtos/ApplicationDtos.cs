@@ -65,3 +65,10 @@ public sealed record AlertaEstoqueDto(
     decimal QuantidadeReferenciaAlerta,
     bool ProximoDoFim,
     bool Parado);
+
+public sealed record TokenAutenticacaoDto(
+    string Token,
+    string Email,
+    string Nome,
+    IReadOnlyList<string> Papeis,
+    DateTime ExpiraEm);

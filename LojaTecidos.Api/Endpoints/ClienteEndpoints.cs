@@ -1,6 +1,7 @@
 using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Clientes;
 using LojaTecidos.Application.Common.Dtos;
+using LojaTecidos.Api.Authorization;
 using LojaTecidos.Api.Extensions;
 using LojaTecidos.Domain.Entities.Enum;
 
@@ -10,9 +11,9 @@ public static class ClienteEndpoints
 {
     public static IEndpointRouteBuilder MapClienteEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/clientes").WithTags("Clientes");
+        var authorization = PoliticasAutorizacao.GerenteOuAdmin;
 
-        group.MapPost("/", async (
+        app.MapPost("/api/clientes", async (
             CadastrarClienteRequest request,
             IUseCase<CadastrarClienteRequest, ClienteDto> useCase,
             CancellationToken cancellationToken) =>
@@ -20,16 +21,24 @@ public static class ClienteEndpoints
                 useCase,
                 request,
                 dto => Results.Created($"/api/clientes/{dto.Id}", dto),
-                cancellationToken));
+                cancellationToken))
+            .WithTags("Clientes")
+            .RequireAuthorization(authorization);
 
-        group.MapGet("/", async (
+        app.MapGet("/api/clientes", async (
             IUseCase<ListarClientesRequest, IReadOnlyList<ClienteDto>> useCase,
             CancellationToken cancellationToken) =>
             await UseCaseEndpointExtensions.ExecuteAsync(
                 useCase,
                 new ListarClientesRequest(),
                 Results.Ok,
-                cancellationToken));
+                cancellationToken))
+            .WithTags("Clientes")
+            .RequireAuthorization(authorization);
+
+        var group = app.MapGroup("/api/clientes")
+            .WithTags("Clientes")
+            .RequireAuthorization(authorization);
 
         group.MapGet("/{clienteId:guid}", async (
             Guid clienteId,
@@ -50,7 +59,8 @@ public static class ClienteEndpoints
                 useCase,
                 new AlterarPerfilClienteRequest(clienteId, body.Categoria),
                 Results.Ok,
-                cancellationToken));
+                cancellationToken))
+            .RequireAuthorization(PoliticasAutorizacao.Admin);
 
         group.MapPut("/{clienteId:guid}/bloqueio", async (
             Guid clienteId,
@@ -61,7 +71,8 @@ public static class ClienteEndpoints
                 useCase,
                 new AlterarBloqueioClienteRequest(clienteId, body.Bloqueado),
                 Results.Ok,
-                cancellationToken));
+                cancellationToken))
+            .RequireAuthorization(PoliticasAutorizacao.Admin);
 
         group.MapPost("/{clienteId:guid}/pagamentos-fiado", async (
             Guid clienteId,

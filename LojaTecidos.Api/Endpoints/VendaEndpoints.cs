@@ -1,6 +1,7 @@
 using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Vendas;
+using LojaTecidos.Api.Authorization;
 using LojaTecidos.Api.Extensions;
 
 namespace LojaTecidos.Api.Endpoints;
@@ -9,10 +10,13 @@ public static class VendaEndpoints
 {
     public static IEndpointRouteBuilder MapVendaEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/vendas").WithTags("Vendas");
+        var group = app.MapGroup("/api/vendas")
+            .WithTags("Vendas")
+            .RequireAuthorization(PoliticasAutorizacao.GerenteOuAdmin);
 
         group.MapPost("/avista", async (
             RegistrarVendaAvistaBody body,
+            HttpContext httpContext,
             IUseCase<RegistrarVendaAvistaRequest, VendaDto> useCase,
             CancellationToken cancellationToken) =>
             await UseCaseEndpointExtensions.ExecuteAsync(
@@ -21,12 +25,13 @@ public static class VendaEndpoints
                     body.DataVenda ?? DataHoraLoja.Agora,
                     body.Itens,
                     body.DescontoPercentual,
-                    body.UsuarioId),
+                    httpContext.User.ObterUsuarioId()),
                 dto => Results.Created($"/api/vendas/{dto.CodigoVenda}", dto),
                 cancellationToken));
 
         group.MapPost("/fiado", async (
             RegistrarVendaFiadoBody body,
+            HttpContext httpContext,
             IUseCase<RegistrarVendaFiadoRequest, VendaDto> useCase,
             CancellationToken cancellationToken) =>
             await UseCaseEndpointExtensions.ExecuteAsync(
@@ -37,7 +42,7 @@ public static class VendaEndpoints
                     body.DataVencimento,
                     body.Itens,
                     body.DescontoPercentual,
-                    body.UsuarioId),
+                    httpContext.User.ObterUsuarioId()),
                 dto => Results.Created($"/api/vendas/{dto.CodigoVenda}", dto),
                 cancellationToken));
 
@@ -70,16 +75,14 @@ public static class VendaEndpoints
     private sealed record RegistrarVendaAvistaBody(
         IReadOnlyList<ItemVendaRequest> Itens,
         DateTime? DataVenda = null,
-        decimal DescontoPercentual = 0,
-        string? UsuarioId = null);
+        decimal DescontoPercentual = 0);
 
     private sealed record RegistrarVendaFiadoBody(
         Guid ClienteId,
         DateTime DataVencimento,
         IReadOnlyList<ItemVendaRequest> Itens,
         DateTime? DataVenda = null,
-        decimal DescontoPercentual = 0,
-        string? UsuarioId = null);
+        decimal DescontoPercentual = 0);
 
     private sealed record RegistrarDevolucaoBody(DateTime? DataDevolucao = null);
 }

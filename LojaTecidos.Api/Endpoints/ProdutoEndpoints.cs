@@ -1,6 +1,7 @@
 using LojaTecidos.Application.Abstractions;
 using LojaTecidos.Application.Common.Dtos;
 using LojaTecidos.Application.Produtos;
+using LojaTecidos.Api.Authorization;
 using LojaTecidos.Api.Extensions;
 using LojaTecidos.Domain.Entities.Enum;
 
@@ -10,7 +11,9 @@ public static class ProdutoEndpoints
 {
     public static IEndpointRouteBuilder MapProdutoEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/produtos").WithTags("Produtos");
+        var group = app.MapGroup("/api/produtos")
+            .WithTags("Produtos")
+            .RequireAuthorization(PoliticasAutorizacao.GerenteOuAdmin);
 
         group.MapPost("/", async (
             CadastrarProdutoBody body,
