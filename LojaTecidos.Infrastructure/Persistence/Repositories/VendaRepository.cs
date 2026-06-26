@@ -23,6 +23,17 @@ public class VendaRepository : IVendaRepository
         return entity is null ? null : VendaMapper.ToDomain(entity);
     }
 
+    public async Task<Guid?> ObterClienteIdPorCodigoVendaAsync(
+        string codigoVenda,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Vendas
+            .AsNoTracking()
+            .Where(v => v.CodigoVenda == codigoVenda.Trim())
+            .Select(v => v.ClienteId)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<int> ObterProximoNumeroSequencialAsync(CancellationToken cancellationToken = default)
     {
         var ultimoNumero = await _context.Vendas
