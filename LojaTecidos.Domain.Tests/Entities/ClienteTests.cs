@@ -1,72 +1,157 @@
 ﻿using LojaTecidos.Domain.Entities;
 using LojaTecidos.Domain.Entities.Enum;
-using System;
-using Xunit;
+using LojaTecidos.Domain.ValueObjects;
 
-namespace LojaTecidos.Domain.Tests.Entities
+namespace LojaTecidos.Domain.Tests.Entities;
+
+public class ClienteTests
 {
-    public class ClienteTests
+    private static readonly DateTime DataEmissao = new(2026, 6, 1);
+    private static readonly DateTime DataVencimento = new(2026, 6, 20);
+
+    private static Cliente CriarCliente(
+        CategoriaPerfil categoria = CategoriaPerfil.BRONZE,
+        string? cpf = null,
+        string? cnpj = null)
     {
-        [Fact]
-        public void AdicionarContaFiado_ClienteComDividaAtiva_DeveLancarExcecao()
-        {
-            // Arrange
-            var cliente = new Cliente(new PerfilCredito(CategoriaPerfil.BRONZE));
+        return new Cliente(
+            "Maria Silva",
+            "92999999999",
+            new Endereco("Rua A", "10", "Centro"),
+            cpf,
+            cnpj,
+            new PerfilCredito(categoria));
+    }
 
-            // simulando divida existente
-            var contaPendente = new ContaFiado(new DateTime(2026, 02, 02), 130.00m);
-            cliente.AdicionarConta(contaPendente);
+    [Fact]
+    public void CriarCliente_SemInformarPerfil_DeveUsarBronzeComoPadrao()
+    {
+        var cliente = new Cliente(
+            "João",
+            "92988888888",
+            new Endereco("Rua B", "20", "Bairro"));
 
-            // simunlando nova conta
-            var novaConta = new ContaFiado(new DateTime(2026, 05, 10), 150.00m);
+        Assert.Equal(CategoriaPerfil.BRONZE, cliente.PerfilCredito.Categoria);
+        Assert.Equal(150m, cliente.PerfilCredito.Limite);
+    }
 
-            // Act & Assert 
-            Assert.Throws<InvalidOperationException>(() => cliente.AdicionarConta(novaConta));
-        }
+    [Fact]
+    public void CriarCliente_ComCpfECnpj_DeveLancarExcecao()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            CriarCliente(cpf: "12345678901", cnpj: "12345678000199"));
+    }
 
-        [Fact]
-        public void AdicionarContaFiado_ClienteSemDivida_DeveAdicionarComSucesso()
-        {
-            //Arrange
-            var cliente = new Cliente(new PerfilCredito(CategoriaPerfil.BRONZE));
-            var contaFiado = new ContaFiado(new DateTime(2026, 05, 10), 130.00m);
+    [Fact]
+    public void CriarCliente_SemDocumento_DevePermitirCadastro()
+    {
+        var cliente = CriarCliente();
 
-            //Act
-            cliente.AdicionarConta(contaFiado);
+        Assert.Null(cliente.Cpf);
+        Assert.Null(cliente.Cnpj);
+    }
 
-            //Assert
-            Assert.Single(cliente.Contas);
-        }
+    [Fact]
+    public void RegistrarCompraFiado_ClienteBloqueado_DeveLancarExcecao()
+    {
+        var cliente = CriarCliente();
+        cliente.Bloquear();
 
-        [Theory]
-        [InlineData(CategoriaPerfil.BRONZE, 150.01)]
-        [InlineData(CategoriaPerfil.PRATA, 350.01)]
-        [InlineData(CategoriaPerfil.OURO, 500.01)]
-        public void AdicionarContaFiado_ValorMaiorQueLimiteDoPerfil_DeveLancarExcecao(CategoriaPerfil categoriaPerfil, decimal valorConta)
-        {
-            //Arrange
-            var perfilCredito = new PerfilCredito(categoriaPerfil);
-            var cliente = new Cliente(perfilCredito);
-            var contaFiado = new ContaFiado(new DateTime(2026, 05, 10), valorConta);
+        Assert.Throws<InvalidOperationException>(() =>
+            cliente.RegistrarCompraFiado(100m, DataEmissao, DataVencimento));
+    }
 
-            //Act & Asset
-            Assert.Throws<InvalidOperationException>(() => cliente.AdicionarConta(contaFiado));
+    [Fact]
+    public void RegistrarCompraFiado_PrimeiraCompraDentroDoLimite_DeveAbrirContaAtiva()
+    {
+        var cliente = CriarCliente();
 
-        }
+        cliente.RegistrarCompraFiado(130m, DataEmissao, DataVencimento);
 
-        [Fact]
-        public void AdicionarContaFiado_DataMaiorQueTrintaDias_DeveLancarExcecao()
-        {
-            //Arrange
-            var dataPagamento = new DateTime(2026, 05, 30);
-            var valorConta = 150.00m;
-            var cliente = new Cliente(new PerfilCredito(CategoriaPerfil.BRONZE));
-            
-            var conta = new ContaFiado(dataPagamento, valorConta);
+        Assert.NotNull(cliente.ContaFiadoAtiva);
+        Assert.Equal(130m, cliente.ContaFiadoAtiva.SaldoDevedor);
+    }
 
-            //Act & Assert
-            Assert.Throws<InvalidOperationException>(()=> cliente.AdicionarConta(conta));
-        }
+    [Theory]
+    [InlineData(CategoriaPerfil.BRONZE, 150.01)]
+    [InlineData(CategoriaPerfil.PRATA, 300.01)]
+    [InlineData(CategoriaPerfil.OURO, 500.01)]
+    public void RegistrarCompraFiado_ValorMaiorQueLimiteDoPerfil_DeveLancarExcecao(
+        CategoriaPerfil categoria,
+        decimal valorCompra)
+    {
+        var cliente = CriarCliente(categoria);
 
+        Assert.Throws<InvalidOperationException>(() =>
+            cliente.RegistrarCompraFiado(valorCompra, DataEmissao, DataVencimento));
+    }
+
+    [Fact]
+    public void RegistrarCompraFiado_ComDividaESomaUltrapassaLimite_DeveLancarExcecao()
+    {
+        var cliente = CriarCliente();
+        cliente.RegistrarCompraFiado(130m, DataEmissao, DataVencimento);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            cliente.RegistrarCompraFiado(30m, DataEmissao, DataVencimento));
+    }
+
+    [Fact]
+    public void RegistrarCompraFiado_ComDividaESomaDentroDoLimite_DeveAdicionarComSucesso()
+    {
+        var cliente = CriarCliente();
+        cliente.RegistrarCompraFiado(100m, DataEmissao, DataVencimento);
+
+        cliente.RegistrarCompraFiado(50m, DataEmissao, DataVencimento);
+
+        Assert.Equal(150m, cliente.ContaFiadoAtiva!.SaldoDevedor);
+    }
+
+    [Fact]
+    public void RegistrarPagamentoFiado_PagamentoParcial_DevePermitirNovaCompraDentroDoLimite()
+    {
+        var cliente = CriarCliente();
+        cliente.RegistrarCompraFiado(100m, DataEmissao, DataVencimento);
+
+        cliente.RegistrarPagamentoFiado(
+            50m,
+            new DateTime(2026, 6, 10),
+            new DateTime(2026, 7, 5));
+
+        cliente.RegistrarCompraFiado(100m, DataEmissao, DataVencimento);
+
+        Assert.Equal(150m, cliente.ContaFiadoAtiva!.SaldoDevedor);
+    }
+
+    [Fact]
+    public void RegistrarPagamentoFiado_QuitacaoTotal_DeveEncerrarContaEPermitirNovaCompra()
+    {
+        var cliente = CriarCliente();
+        cliente.RegistrarCompraFiado(100m, DataEmissao, DataVencimento);
+        var contaAnterior = cliente.ContaFiadoAtiva;
+
+        cliente.RegistrarPagamentoFiado(100m, new DateTime(2026, 6, 10));
+
+        Assert.Null(cliente.ContaFiadoAtiva);
+        Assert.Single(cliente.ContasQuitadas);
+        Assert.Same(contaAnterior, cliente.ContasQuitadas.First());
+        Assert.Equal(StatusContaFiado.Quitada, contaAnterior!.Status);
+
+        cliente.RegistrarCompraFiado(80m, DataEmissao, DataVencimento);
+
+        Assert.NotNull(cliente.ContaFiadoAtiva);
+        Assert.NotSame(contaAnterior, cliente.ContaFiadoAtiva);
+        Assert.Equal(80m, cliente.ContaFiadoAtiva.SaldoDevedor);
+    }
+
+    [Fact]
+    public void AlterarPerfil_Manualmente_DeveAtualizarLimite()
+    {
+        var cliente = CriarCliente();
+
+        cliente.AlterarPerfil(CategoriaPerfil.OURO);
+
+        Assert.Equal(CategoriaPerfil.OURO, cliente.PerfilCredito.Categoria);
+        Assert.Equal(500m, cliente.PerfilCredito.Limite);
     }
 }
